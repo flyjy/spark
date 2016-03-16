@@ -285,6 +285,7 @@ class Word2Vec extends Serializable with Logging {
 
   /**
    * Computes the vector representation of each word in vocabulary.
+   *
    * @param dataset an RDD of sentences,
    *                each sentence is expressed as an iterable collection of words
    * @return a Word2VecModel
@@ -340,9 +341,10 @@ class Word2Vec extends Serializable with Logging {
             var wc = wordCount
             if (wordCount - lastWordCount > 10000) {
               lwc = wordCount
-              // TODO: discount by iteration?
-              alpha =
-                learningRate * (1 - numPartitions * wordCount.toDouble / (trainWordsCount + 1))
+              // alpha = learningRate * (1 - progress) where progress increases from 0
+              // to (numIterations * trainWordsCount) / (numIterations * trainWordsCount + 1)
+              alpha = learningRate * (1 - numPartitions * wordCount.toDouble /
+                    (trainWordsCount * (numIterations - k + 1) + 1))
               if (alpha < learningRate * 0.0001) alpha = learningRate * 0.0001
               logInfo("wordCount = " + wordCount + ", alpha = " + alpha)
             }
@@ -429,6 +431,7 @@ class Word2Vec extends Serializable with Logging {
 
   /**
    * Computes the vector representation of each word in vocabulary (Java version).
+   *
    * @param dataset a JavaRDD of words
    * @return a Word2VecModel
    */
@@ -440,6 +443,7 @@ class Word2Vec extends Serializable with Logging {
 
 /**
  * Word2Vec model
+ *
  * @param wordIndex maps each word to an index, which can retrieve the corresponding
  *                  vector from wordVectors
  * @param wordVectors array of length numWords * vectorSize, vector corresponding
@@ -488,6 +492,7 @@ class Word2VecModel private[spark] (
 
   /**
    * Transforms a word to its vector representation
+   *
    * @param word a word
    * @return vector representation of word
    */
@@ -504,6 +509,7 @@ class Word2VecModel private[spark] (
 
   /**
    * Find synonyms of a word
+   *
    * @param word a word
    * @param num number of synonyms to find
    * @return array of (word, cosineSimilarity)
@@ -516,6 +522,7 @@ class Word2VecModel private[spark] (
 
   /**
    * Find synonyms of the vector representation of a word
+   *
    * @param vector vector representation of a word
    * @param num number of synonyms to find
    * @return array of (word, cosineSimilarity)
